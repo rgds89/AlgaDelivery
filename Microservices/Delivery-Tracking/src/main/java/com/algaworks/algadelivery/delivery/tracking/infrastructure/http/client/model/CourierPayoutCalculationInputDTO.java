@@ -1,4 +1,4 @@
-package com.algaworks.algadelivery.delivery.tracking.infrastructure.http.client;
+package com.algaworks.algadelivery.delivery.tracking.infrastructure.http.client.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

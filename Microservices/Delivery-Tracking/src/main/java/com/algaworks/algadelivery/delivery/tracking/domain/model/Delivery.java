@@ -1,8 +1,12 @@
 package com.algaworks.algadelivery.delivery.tracking.domain.model;
 
+import com.algaworks.algadelivery.delivery.tracking.domain.event.DeliveryFulfilledEvent;
+import com.algaworks.algadelivery.delivery.tracking.domain.event.DeliveryPickedUpEvent;
+import com.algaworks.algadelivery.delivery.tracking.domain.event.DeliveryPlacedEvent;
 import com.algaworks.algadelivery.delivery.tracking.domain.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.AbstractAggregateRoot;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -13,11 +17,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 @Setter(AccessLevel.PRIVATE)
 @Getter
-public class Delivery {
+public class Delivery extends AbstractAggregateRoot<Delivery> {
     @Id
     @EqualsAndHashCode.Include
     private UUID id;
@@ -101,17 +105,26 @@ public class Delivery {
         verifyIfCanBePlaced();
         setPlacedAt(OffsetDateTime.now());
         changeStatusTo(DeliveryStatus.WAITING_FOR_COURIER);
+        super.registerEvent(
+                new DeliveryPlacedEvent(this.getPlacedAt(), this.getId())
+        );
     }
 
     public void pickUp(UUID courierId) {
         setAssignedAt(OffsetDateTime.now());
         setCorrierId(courierId);
         changeStatusTo(DeliveryStatus.IN_TRANSIT);
+        super.registerEvent(
+                new DeliveryPickedUpEvent(this.getAssignedAt(), this.getId())
+        );
     }
 
     public void markAsDelivered() {
         setFulfilledAt(OffsetDateTime.now());
         changeStatusTo(DeliveryStatus.DELIVERED);
+        super.registerEvent(
+                new DeliveryFulfilledEvent(this.getFulfilledAt(), this.getId())
+        );
     }
 
     public void editPreparationDetails(PreparationDetails preparationDetails) {
